@@ -1,34 +1,38 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Events = () => {
-  // This will be replaced with actual data from database
-  const sampleEvents = [
-    {
-      id: "1",
-      title: "Summer Family Picnic",
-      description: "Join us for a fun-filled day at the park with games, food, and great company!",
-      date: "2025-11-15",
-      time: "10:00 AM - 4:00 PM",
-      venue: "Green Valley Park, Tirupati",
-      image: "https://images.unsplash.com/photo-1530541930197-ff16ac917b0e?w=800",
-      capacity: 100,
-      registered: 45,
-    },
-    {
-      id: "2",
-      title: "Festival Celebration Night",
-      description: "Experience the joy of our cultural festival with music, dance, and traditional food.",
-      date: "2025-11-20",
-      time: "6:00 PM - 10:00 PM",
-      venue: "TCFC Community Hall, Tirupati",
-      image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
-      capacity: 150,
-      registered: 89,
-    },
-  ];
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "published")
+        .order("event_date", { ascending: true });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading events...</div>;
+  }
 
   return (
     <div className="min-h-screen">
@@ -49,11 +53,11 @@ const Events = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sampleEvents.map((event) => (
+            {events.map((event) => (
               <Card key={event.id} className="overflow-hidden hover:shadow-elegant transition-all duration-300">
                 <div className="h-48 overflow-hidden">
                   <img
-                    src={event.image}
+                    src={event.image_url || "https://images.unsplash.com/photo-1530541930197-ff16ac917b0e?w=800"}
                     alt={event.title}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
@@ -67,11 +71,11 @@ const Events = () => {
                 <CardContent className="space-y-3">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4 mr-2" />
-                    <span>{new Date(event.date).toLocaleDateString()}</span>
+                    <span>{new Date(event.event_date).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Clock className="h-4 w-4 mr-2" />
-                    <span>{event.time}</span>
+                    <span>{event.start_time} - {event.end_time}</span>
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 mr-2" />
@@ -79,13 +83,11 @@ const Events = () => {
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Users className="h-4 w-4 mr-2" />
-                    <span>
-                      {event.registered} / {event.capacity} registered
-                    </span>
+                    <span>Max capacity: {event.max_capacity}</span>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Link to="/auth" className="w-full">
+                  <Link to={`/events/${event.id}/book`} className="w-full">
                     <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
                       Book Now
                     </Button>
@@ -95,7 +97,7 @@ const Events = () => {
             ))}
           </div>
 
-          {sampleEvents.length === 0 && (
+          {events.length === 0 && (
             <div className="text-center py-20">
               <Calendar className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-2xl font-semibold mb-2">No events scheduled yet</h3>

@@ -33,9 +33,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check admin status based on email
+        // Check admin status from database
         if (session?.user) {
-          setIsAdmin(session.user.email === "admin@tcfc.com");
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+          }, 0);
         } else {
           setIsAdmin(false);
         }
@@ -48,12 +50,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        setIsAdmin(session.user.email === "admin@tcfc.com");
+        checkAdminStatus(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .single();
+    
+    setIsAdmin(!!data);
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
