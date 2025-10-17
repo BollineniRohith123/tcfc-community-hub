@@ -14,7 +14,21 @@ const EventForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    event_date: string;
+    start_time: string;
+    end_time: string;
+    venue: string;
+    venue_map_link: string;
+    image_url: string;
+    max_capacity: number;
+    lunch_price: number;
+    dinner_price: number;
+    status: "draft" | "published" | "cancelled" | "completed";
+    allowed_tiers: ("platinum" | "diamond" | "gold")[];
+  }>({
     title: "",
     description: "",
     event_date: "",
@@ -27,7 +41,7 @@ const EventForm = () => {
     lunch_price: 0,
     dinner_price: 0,
     status: "draft",
-    allowed_tiers: ["platinum", "diamond", "gold"] as ("platinum" | "diamond" | "gold")[],
+    allowed_tiers: ["platinum", "diamond", "gold"],
   });
 
   useEffect(() => {
@@ -228,7 +242,7 @@ const EventForm = () => {
             <div className="space-y-2">
               <Label>Allowed Membership Tiers</Label>
               <div className="flex gap-4">
-                {["platinum", "diamond", "gold"].map((tier) => (
+                {(["platinum", "diamond", "gold"] as const).map((tier) => (
                   <div key={tier} className="flex items-center space-x-2">
                     <Checkbox
                       id={tier}
