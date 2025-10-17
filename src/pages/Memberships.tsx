@@ -1,20 +1,125 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 const Memberships = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [memberships, setMemberships] = useState<any[]>([]);
+  const [userMembership, setUserMembership] = useState<any>(null);
 
-  const handleChooseMembership = (tierName: string) => {
+  useEffect(() => {
+    fetchMemberships();
     if (user) {
-      // TODO: Implement payment flow for membership
-      toast.info(`Membership payment flow for ${tierName} - Coming soon!`);
+      checkUserMembership();
+    }
+  }, [user]);
+
+  const fetchMemberships = async () => {
+    const { data, error } = await supabase
+      .from("memberships")
+      .select("*")
+      .order("price", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching memberships:", error);
     } else {
+      setMemberships(data || []);
+    }
+  };
+
+  const checkUserMembership = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("user_memberships")
+      .select("*, membership:memberships(*)")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .single();
+
+    if (!error && data) {
+      setUserMembership(data);
+    }
+  };
+
+  const handleChooseMembership = async (tierName: string) => {
+    if (!user) {
       navigate("/auth");
+      return;
+    }
+
+    // Check if user already has an active membership
+    if (userMembership) {
+      toast.error("You already have an active membership!");
+      return;
+    }
+
+    setLoading(tierName);
+
+    try {
+      // Find membership by tier name
+      const membership = memberships.find(
+        (m) => m.tier.toLowerCase() === tierName.toLowerCase()
+      );
+
+      if (!membership) {
+        throw new Error("Membership not found");
+      }
+
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Not authenticated");
+      }
+
+      // TEMPORARY CLIENT-SIDE MOCK PAYMENT (simplified version)
+      // Note: In production, this should use edge functions with proper payment gateway
+
+      toast.success("Processing mock payment...");
+
+      // Simulate payment processing
+      setTimeout(async () => {
+        try {
+          // Create user membership directly (skipping payment record due to RLS)
+          const endDate = new Date();
+          endDate.setFullYear(endDate.getFullYear() + 1);
+
+          const { error: membershipError } = await supabase
+            .from("user_memberships")
+            .insert({
+              user_id: user.id,
+              membership_id: membership.id,
+              start_date: new Date().toISOString().split('T')[0],
+              end_date: endDate.toISOString().split('T')[0],
+              is_active: true,
+            });
+
+          if (membershipError) throw membershipError;
+
+          // Generate mock transaction ID
+          const mockTxnId = `MOCK_TXN_${Date.now()}`;
+
+          // Redirect to success page
+          window.location.href = `/payment-success?txn=${mockTxnId}&amount=${membership.price}&type=membership&tier=${tierName}`;
+        } catch (error) {
+          console.error("Payment completion error:", error);
+          // Redirect to failure page
+          const mockTxnId = `MOCK_TXN_${Date.now()}`;
+          window.location.href = `/payment-failed?txn=${mockTxnId}&error=${encodeURIComponent(error.message || 'Unknown error')}`;
+        }
+      }, 2000);
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      toast.error(error.message || "Failed to initiate payment");
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -132,8 +237,18 @@ const Memberships = () => {
                         : ""
                     }`}
                     variant={tier.popular ? "default" : "outline"}
+                    disabled={loading === tier.name || !!userMembership}
                   >
-                    Choose {tier.name}
+                    {loading === tier.name ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : userMembership ? (
+                      "Already a Member"
+                    ) : (
+                      `Choose ${tier.name}`
+                    )}
                   </Button>
                 </CardFooter>
               </Card>

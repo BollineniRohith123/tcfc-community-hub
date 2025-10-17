@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -51,7 +51,7 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center space-x-2">
             {user ? (
               <>
-                {user.email === "admin@tcfc.com" && (
+                {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline">Admin Dashboard</Button>
                   </Link>
@@ -98,7 +98,7 @@ export const Navbar = () => {
               <div className="pt-2 border-t border-border space-y-2">
                 {user ? (
                   <>
-                    {user.email === "admin@tcfc.com" && (
+                    {isAdmin && (
                       <Link to="/admin" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full">
                           Admin Dashboard

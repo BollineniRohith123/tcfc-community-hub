@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Users, DollarSign, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, DollarSign, LogOut, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -11,6 +11,7 @@ const AdminLayout = () => {
     { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { path: "/admin/events", label: "Events", icon: Calendar },
     { path: "/admin/users", label: "Users", icon: Users },
+    { path: "/admin/memberships", label: "Memberships", icon: CreditCard },
     { path: "/admin/payments", label: "Payments", icon: DollarSign },
   ];
 

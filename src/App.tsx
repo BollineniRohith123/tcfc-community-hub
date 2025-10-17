@@ -21,6 +21,10 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import EventForm from "./pages/admin/EventForm";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminMemberships from "./pages/admin/AdminMemberships";
+import MembershipForm from "./pages/admin/MembershipForm";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,13 +55,15 @@ const App = () => (
                   } 
                 />
                 <Route 
-                  path="/events/:id/book" 
+                  path="/events/:id/book"
                   element={
                     <ProtectedRoute>
                       <EventBooking />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-failed" element={<PaymentFailed />} />
                 <Route
                   path="/admin"
                   element={
@@ -72,6 +78,8 @@ const App = () => (
                   <Route path="events/:id/edit" element={<EventForm />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="payments" element={<AdminPayments />} />
+                  <Route path="memberships" element={<AdminMemberships />} />
+                  <Route path="memberships/:id/edit" element={<MembershipForm />} />
                 </Route>
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
