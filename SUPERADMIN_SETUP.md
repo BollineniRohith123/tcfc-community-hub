@@ -11,15 +11,20 @@
 ## Step-by-Step Setup Process
 
 ### Step 1: Sign Up the Superadmin User
+
+**⚠️ IMPORTANT**: You must SIGN UP first before you can login!
+
 1. Navigate to `/auth` in your application
-2. Click on "Sign Up" if you're on the login form
-3. Fill in the registration form:
+2. **If you see "Welcome Back" (login form)**: Click the text at the bottom that says **"Don't have an account? Sign up"**
+3. You should now see **"Join TCFC"** at the top (signup form)
+4. Fill in ALL THREE fields:
+   - **Full Name**: `Super Admin`
    - **Email**: `superadmin@gmail.com`
    - **Password**: `superadmin123`
-   - **Full Name**: `Super Admin` (or your preferred name)
-4. Click "Sign Up"
+5. Click **"Sign Up"** button
+6. You should see a success message and be automatically logged in
 
-> **Note**: The application has auto-confirm enabled, so you should be logged in immediately.
+> **Note**: The application has auto-confirm enabled, so you should be logged in immediately after signup.
 
 ---
 
