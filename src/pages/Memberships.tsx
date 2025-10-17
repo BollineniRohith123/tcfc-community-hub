@@ -1,9 +1,23 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const Memberships = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleChooseMembership = (tierName: string) => {
+    if (user) {
+      // TODO: Implement payment flow for membership
+      toast.info(`Membership payment flow for ${tierName} - Coming soon!`);
+    } else {
+      navigate("/auth");
+    }
+  };
+
   const tiers = [
     {
       name: "Gold",
@@ -110,18 +124,17 @@ const Memberships = () => {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link to="/auth" className="w-full">
-                    <Button
-                      className={`w-full ${
-                        tier.popular
-                          ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                          : ""
-                      }`}
-                      variant={tier.popular ? "default" : "outline"}
-                    >
-                      Choose {tier.name}
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => handleChooseMembership(tier.name)}
+                    className={`w-full ${
+                      tier.popular
+                        ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                        : ""
+                    }`}
+                    variant={tier.popular ? "default" : "outline"}
+                  >
+                    Choose {tier.name}
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
