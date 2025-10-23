@@ -83,11 +83,14 @@ CREATE TABLE public.events (
   max_capacity INTEGER DEFAULT 100 NOT NULL,
   lunch_price NUMERIC DEFAULT 0,
   dinner_price NUMERIC DEFAULT 0,
+  is_free BOOLEAN DEFAULT false NOT NULL,
   allowed_tiers membership_tier[] DEFAULT ARRAY['platinum', 'diamond', 'gold']::membership_tier[],
   status event_status DEFAULT 'draft' NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
+
+COMMENT ON COLUMN public.events.is_free IS 'If true, the event is free and does not require payment';
 
 -- Event Bookings Table
 CREATE TABLE public.event_bookings (
@@ -96,6 +99,7 @@ CREATE TABLE public.event_bookings (
   event_id UUID REFERENCES public.events(id) ON DELETE CASCADE NOT NULL,
   num_adults INTEGER DEFAULT 1 NOT NULL,
   num_children INTEGER DEFAULT 0 NOT NULL,
+  children_ages INTEGER[] DEFAULT ARRAY[]::INTEGER[],
   include_lunch BOOLEAN DEFAULT false NOT NULL,
   include_dinner BOOLEAN DEFAULT false NOT NULL,
   total_amount NUMERIC NOT NULL,
@@ -103,6 +107,8 @@ CREATE TABLE public.event_bookings (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
+
+COMMENT ON COLUMN public.event_bookings.children_ages IS 'Array of ages for each child in the booking';
 
 -- Payments Table
 CREATE TABLE public.payments (

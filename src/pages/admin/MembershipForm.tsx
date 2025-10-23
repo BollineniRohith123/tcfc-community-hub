@@ -44,13 +44,14 @@ export default function MembershipForm() {
 
       if (error) throw error;
 
+      const benefitsArray = Array.isArray(data.benefits) ? data.benefits as string[] : [];
       setFormData({
         name: data.name,
         price: data.price,
         description: data.description,
-        benefits: data.benefits || [],
+        benefits: benefitsArray,
       });
-      setBenefitsText((data.benefits || []).join("\n"));
+      setBenefitsText(benefitsArray.join("\n"));
     } catch (error: any) {
       console.error("Error fetching membership:", error);
       toast.error("Failed to load membership");

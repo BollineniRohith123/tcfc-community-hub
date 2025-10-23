@@ -12,7 +12,7 @@ interface Membership {
   name: string;
   price: number;
   description: string;
-  benefits: string[];
+  benefits: string[] | null;
   created_at: string;
 }
 
@@ -32,7 +32,12 @@ export default function AdminMemberships() {
         .order("price", { ascending: true });
 
       if (error) throw error;
-      setMemberships(data || []);
+      // Cast benefits from Json to string array
+      const formattedData = (data || []).map(m => ({
+        ...m,
+        benefits: Array.isArray(m.benefits) ? m.benefits as string[] : []
+      }));
+      setMemberships(formattedData);
     } catch (error: any) {
       console.error("Error fetching memberships:", error);
       toast.error("Failed to load memberships");
@@ -77,7 +82,7 @@ export default function AdminMemberships() {
               <div className="space-y-2">
                 <h4 className="font-semibold">Benefits:</h4>
                 <ul className="space-y-1">
-                  {membership.benefits.map((benefit, index) => (
+                  {(membership.benefits || []).map((benefit, index) => (
                     <li key={index} className="text-sm flex items-start">
                       <span className="text-primary mr-2">✓</span>
                       {benefit}

@@ -22,6 +22,7 @@ interface Event {
   lunch_price: number;
   dinner_price: number;
   max_capacity: number;
+  is_free: boolean;
 }
 
 const EventBooking = () => {
@@ -37,6 +38,7 @@ const EventBooking = () => {
     include_lunch: false,
     include_dinner: false,
   });
+  const [childrenAges, setChildrenAges] = useState<number[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -68,6 +70,8 @@ const EventBooking = () => {
 
   const calculateTotal = () => {
     if (!event) return 0;
+    if (event.is_free) return 0;
+    
     let total = 0;
     const totalPeople = formData.num_adults + formData.num_children;
     
@@ -85,6 +89,12 @@ const EventBooking = () => {
     e.preventDefault();
     if (!user || !event) return;
 
+    // Validate children ages if children are included
+    if (formData.num_children > 0 && childrenAges.length !== formData.num_children) {
+      toast({ title: "Please provide ages for all children", variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -98,8 +108,9 @@ const EventBooking = () => {
             event_id: event.id,
             user_id: user.id,
             ...formData,
+            children_ages: childrenAges,
             total_amount: totalAmount,
-            status: "pending",
+            status: event.is_free ? "confirmed" : "pending",
           },
         ])
         .select()
@@ -107,7 +118,14 @@ const EventBooking = () => {
 
       if (bookingError) throw bookingError;
 
-      // Initiate payment
+      // If event is free, redirect to success page directly
+      if (event.is_free) {
+        toast({ title: "Booking confirmed!", description: "You have successfully registered for this free event." });
+        navigate("/profile");
+        return;
+      }
+
+      // Initiate payment for paid events
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "phonepe-payment",
         {
@@ -203,11 +221,38 @@ const EventBooking = () => {
                     type="number"
                     min={0}
                     value={formData.num_children}
-                    onChange={(e) =>
-                      setFormData({ ...formData, num_children: parseInt(e.target.value) })
-                    }
+                    onChange={(e) => {
+                      const count = parseInt(e.target.value) || 0;
+                      setFormData({ ...formData, num_children: count });
+                      // Reset children ages array to match new count
+                      setChildrenAges(new Array(count).fill(0));
+                    }}
                   />
                 </div>
+
+                {formData.num_children > 0 && (
+                  <div className="space-y-3">
+                    <Label>Children Ages (in years)</Label>
+                    {Array.from({ length: formData.num_children }).map((_, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Label className="w-20">Child {index + 1}:</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={18}
+                          placeholder="Age"
+                          value={childrenAges[index] || ''}
+                          onChange={(e) => {
+                            const newAges = [...childrenAges];
+                            newAges[index] = parseInt(e.target.value) || 0;
+                            setChildrenAges(newAges);
+                          }}
+                          required
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {event.lunch_price > 0 && (
                   <div className="flex items-center space-x-2">
@@ -240,14 +285,21 @@ const EventBooking = () => {
                 )}
 
                 <div className="border-t pt-4">
-                  <div className="flex justify-between items-center text-2xl font-bold">
-                    <span>Total:</span>
-                    <span>₹{total.toLocaleString()}</span>
-                  </div>
+                  {event.is_free ? (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">FREE EVENT</p>
+                      <p className="text-sm text-muted-foreground mt-1">No payment required</p>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center text-2xl font-bold">
+                      <span>Total:</span>
+                      <span>₹{total.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={submitting || total === 0}>
-                  {submitting ? "Processing..." : "Proceed to Payment"}
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting ? "Processing..." : event.is_free ? "Confirm Registration" : "Proceed to Payment"}
                 </Button>
               </form>
             </CardContent>

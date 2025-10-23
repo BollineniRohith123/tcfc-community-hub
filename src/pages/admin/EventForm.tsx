@@ -26,6 +26,7 @@ const EventForm = () => {
     max_capacity: number;
     lunch_price: number;
     dinner_price: number;
+    is_free: boolean;
     status: "draft" | "published" | "cancelled" | "completed";
     allowed_tiers: ("platinum" | "diamond" | "gold")[];
   }>({
@@ -40,6 +41,7 @@ const EventForm = () => {
     max_capacity: 100,
     lunch_price: 0,
     dinner_price: 0,
+    is_free: false,
     status: "draft",
     allowed_tiers: ["platinum", "diamond", "gold"],
   });
@@ -206,6 +208,22 @@ const EventForm = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_free"
+                  checked={formData.is_free}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_free: checked as boolean })}
+                />
+                <Label htmlFor="is_free" className="cursor-pointer font-semibold">
+                  Free Event (No payment required)
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Check this box if this event is free and does not require any payment
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="max_capacity">Max Capacity</Label>
@@ -225,7 +243,9 @@ const EventForm = () => {
                   type="number"
                   value={formData.lunch_price}
                   onChange={(e) => setFormData({ ...formData, lunch_price: parseFloat(e.target.value) })}
+                  disabled={formData.is_free}
                 />
+                {formData.is_free && <p className="text-xs text-muted-foreground">Disabled for free events</p>}
               </div>
 
               <div className="space-y-2">
@@ -235,7 +255,9 @@ const EventForm = () => {
                   type="number"
                   value={formData.dinner_price}
                   onChange={(e) => setFormData({ ...formData, dinner_price: parseFloat(e.target.value) })}
+                  disabled={formData.is_free}
                 />
+                {formData.is_free && <p className="text-xs text-muted-foreground">Disabled for free events</p>}
               </div>
             </div>
 

@@ -40,6 +40,7 @@ export type Database = {
       }
       event_bookings: {
         Row: {
+          children_ages: number[] | null
           created_at: string
           event_id: string
           id: string
@@ -53,6 +54,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          children_ages?: number[] | null
           created_at?: string
           event_id: string
           id?: string
@@ -66,6 +68,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          children_ages?: number[] | null
           created_at?: string
           event_id?: string
           id?: string
@@ -105,6 +108,7 @@ export type Database = {
           event_date: string
           id: string
           image_url: string | null
+          is_free: boolean
           lunch_price: number | null
           max_capacity: number
           start_time: string
@@ -125,6 +129,7 @@ export type Database = {
           event_date: string
           id?: string
           image_url?: string | null
+          is_free?: boolean
           lunch_price?: number | null
           max_capacity?: number
           start_time: string
@@ -145,6 +150,7 @@ export type Database = {
           event_date?: string
           id?: string
           image_url?: string | null
+          is_free?: boolean
           lunch_price?: number | null
           max_capacity?: number
           start_time?: string

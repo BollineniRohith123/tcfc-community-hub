@@ -41,7 +41,7 @@ const Memberships = () => {
       .from("user_memberships")
       .select("*, membership:memberships(*)")
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .eq("is_active", true)
       .single();
 
     if (!error && data) {
