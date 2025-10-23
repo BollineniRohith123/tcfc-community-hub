@@ -11,6 +11,7 @@ const Memberships = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [memberships, setMemberships] = useState<any[]>([]);
   const [userMembership, setUserMembership] = useState<any>(null);
 
@@ -22,15 +23,20 @@ const Memberships = () => {
   }, [user]);
 
   const fetchMemberships = async () => {
-    const { data, error } = await supabase
-      .from("memberships")
-      .select("*")
-      .order("price", { ascending: true });
+    try {
+      setFetchLoading(true);
+      const { data, error } = await supabase
+        .from("memberships")
+        .select("*")
+        .order("price", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching memberships:", error);
-    } else {
+      if (error) throw error;
       setMemberships(data || []);
+    } catch (error) {
+      console.error("Error fetching memberships:", error);
+      toast.error("Failed to load memberships");
+    } finally {
+      setFetchLoading(false);
     }
   };
 
@@ -64,9 +70,9 @@ const Memberships = () => {
     setLoading(tierName);
 
     try {
-      // Find membership by tier name
+      // Find membership by name
       const membership = memberships.find(
-        (m) => m.tier.toLowerCase() === tierName.toLowerCase()
+        (m) => m.name.toLowerCase() === tierName.toLowerCase()
       );
 
       if (!membership) {
@@ -123,51 +129,15 @@ const Memberships = () => {
     }
   };
 
-  const tiers = [
-    {
-      name: "Gold",
-      price: "₹15,000",
-      description: "Perfect for families starting their journey with TCFC",
-      benefits: [
-        "Access to all public events",
-        "Standard booking priority",
-        "Community access",
-        "Event notifications",
-        "1 year membership",
-      ],
-      color: "from-yellow-500 to-yellow-600",
-    },
-    {
-      name: "Diamond",
-      price: "₹30,000",
-      description: "Great value for active families",
-      benefits: [
-        "All Gold benefits",
-        "Early event access",
-        "Special diamond-only events",
-        "Community networking sessions",
-        "Discounted meal prices",
-        "Priority customer support",
-      ],
-      color: "from-cyan-500 to-blue-600",
-      popular: true,
-    },
-    {
-      name: "Platinum",
-      price: "₹50,000",
-      description: "Premium experience for families who want the best",
-      benefits: [
-        "All Diamond benefits",
-        "Priority event booking",
-        "Exclusive platinum-only events",
-        "VIP seating at all events",
-        "Complimentary refreshments",
-        "Dedicated relationship manager",
-        "Extended family member access",
-      ],
-      color: "from-purple-600 to-pink-600",
-    },
-  ];
+  // Color mapping for tiers
+  const tierColors: { [key: string]: string } = {
+    gold: "from-yellow-500 to-yellow-600",
+    diamond: "from-cyan-500 to-blue-600",
+    platinum: "from-purple-600 to-pink-600",
+  };
+
+  // Set Diamond as most popular
+  const popularTier = "diamond";
 
   return (
     <div className="min-h-screen">
@@ -187,73 +157,94 @@ const Memberships = () => {
       {/* Membership Tiers */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            {tiers.map((tier, index) => (
-              <Card
-                key={index}
-                className={`relative overflow-hidden ${
-                  tier.popular
-                    ? "border-primary shadow-elegant scale-105"
-                    : "hover:shadow-elegant"
-                } transition-all duration-300`}
-              >
-                {tier.popular && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-accent text-primary-foreground px-4 py-1 text-sm font-semibold rounded-bl-lg">
-                    Most Popular
-                  </div>
-                )}
-                <CardHeader className="text-center pb-8 pt-8">
-                  <div
-                    className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${tier.color} mx-auto mb-4 flex items-center justify-center shadow-lg`}
+          {loading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+              <p className="mt-4 text-muted-foreground">Loading memberships...</p>
+            </div>
+          ) : memberships.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No memberships available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-8">
+              {memberships.map((membership) => {
+                const isPopular = membership.tier.toLowerCase() === popularTier;
+                const tierColor = tierColors[membership.tier.toLowerCase()] || "from-gray-500 to-gray-600";
+                const benefitsArray = Array.isArray(membership.benefits) 
+                  ? membership.benefits as string[]
+                  : [];
+
+                return (
+                  <Card
+                    key={membership.id}
+                    className={`relative overflow-hidden ${
+                      isPopular
+                        ? "border-primary shadow-elegant scale-105"
+                        : "hover:shadow-elegant"
+                    } transition-all duration-300`}
                   >
-                    <span className="text-3xl font-bold text-white">
-                      {tier.name[0]}
-                    </span>
-                  </div>
-                  <CardTitle className="text-3xl mb-2">{tier.name}</CardTitle>
-                  <div className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    {tier.price}
-                  </div>
-                  <CardDescription className="text-base mt-2">
-                    {tier.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {tier.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start">
-                        <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    onClick={() => handleChooseMembership(tier.name)}
-                    className={`w-full ${
-                      tier.popular
-                        ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                        : ""
-                    }`}
-                    variant={tier.popular ? "default" : "outline"}
-                    disabled={loading === tier.name || !!userMembership}
-                  >
-                    {loading === tier.name ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : userMembership ? (
-                      "Already a Member"
-                    ) : (
-                      `Choose ${tier.name}`
+                    {isPopular && (
+                      <div className="absolute top-0 right-0 bg-gradient-to-r from-primary to-accent text-primary-foreground px-4 py-1 text-sm font-semibold rounded-bl-lg">
+                        Most Popular
+                      </div>
                     )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                    <CardHeader className="text-center pb-8 pt-8">
+                      <div
+                        className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${tierColor} mx-auto mb-4 flex items-center justify-center shadow-lg`}
+                      >
+                        <span className="text-3xl font-bold text-white">
+                          {membership.name[0]}
+                        </span>
+                      </div>
+                      <CardTitle className="text-3xl mb-2 capitalize">
+                        {membership.name}
+                      </CardTitle>
+                      <div className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                        ₹{Number(membership.price).toLocaleString()}
+                      </div>
+                      <CardDescription className="text-base mt-2">
+                        {membership.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        {benefitsArray.map((benefit, i) => (
+                          <li key={i} className="flex items-start">
+                            <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm">{benefit}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      <Button
+                        onClick={() => handleChooseMembership(membership.name)}
+                        className={`w-full ${
+                          isPopular
+                            ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                            : ""
+                        }`}
+                        variant={isPopular ? "default" : "outline"}
+                        disabled={loading === membership.name || !!userMembership}
+                      >
+                        {loading === membership.name ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : userMembership ? (
+                          "Already a Member"
+                        ) : (
+                          `Choose ${membership.name}`
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
